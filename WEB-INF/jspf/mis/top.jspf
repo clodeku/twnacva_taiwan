@@ -1,0 +1,123 @@
+<%@page pageEncoding="UTF-8"%>
+<%
+	// 版本字串
+	String version_str = "Ver22.1020";
+	
+	// 取得語系設定 
+	String[] ss_lang_text = app_sm.select(tblss, "ss_title=? AND ss_keyword=?", new Object[]{ "可用語言版本", "web.language.offer" }).getString("ss_text").split(";");
+	String[] ss_lang_value = app_sm.select(tblss, "ss_title=? AND ss_keyword=?", new Object[]{ "可用語言版本", "web.language.offer" }).getString("ss_value").split(";");
+
+	// 重新抓取當前程式所在頁籤模組id
+	TableRecord left_topmf;
+	String left_topmfid="";
+	String left_mispage = request.getServletPath();
+	String left_misurl  = left_mispage.substring(left_mispage.lastIndexOf("/mis/")+5);
+	if(left_misurl.equals("default.jsp")) {
+		left_topmfid = StringTool.validString(request.getParameter("mfid"));
+		left_topmf = app_sm.select(tblmf,left_topmfid);
+	} else {
+		String left_mffolder = left_misurl.substring(0, left_misurl.indexOf("/"));
+		String left_mfurl = left_misurl.substring(left_misurl.indexOf("/") + 1);
+		left_topmf = app_sm.select(tblmf, "mf_folder=?", new Object[]{ left_mffolder });
+		left_topmfid = left_topmf.getString("mf_id");
+	}
+	// 重新塞入所屬頁籤模組
+	if(!left_topmf.getString("mf_id").isEmpty()) {
+		session.setAttribute("current_top", left_topmf);
+	}
+
+   	// Current top function.
+   	TableRecord ses_ctmf = (TableRecord)session.getAttribute("current_top");
+
+	// 倒數分鐘數
+	int timeout = (int) session.getMaxInactiveInterval();	// 抓取 session存在時間
+	int back_time = timeout / 60;
+	//int back_time = 30;
+%>
+<script type="text/javascript">
+	document.addEventListener("leftmenuLoaded", function(){
+		<%if(left_misurl.equals("default.jsp")) { %>
+		document.getElementById("show").src="leftmenu.jsp?mf_top=<%=left_topmfid %>&node=<%=node%>"
+		<%} else { %>
+		document.getElementById("show").src="../leftmenu.jsp?mf_top=<%=left_topmfid %>&node=<%=node%>"
+		<%} %>
+	});
+
+	var _outcount = <%=back_time %>;
+	var _outflag = setTimeout("_out_timedCount()",1000*60);
+	function _out_timedCount() {
+		document.getElementById('_outtime').value=_outcount;
+		_outcount 	= _outcount - 1;
+		if(_outcount > 0) {
+			_outflag	= setTimeout("_out_timedCount()",1000*60);
+		} else {
+			clearTimeout(_outflag);
+			document.location.href="<%=request.getContextPath()%>/mis/logout.jsp";
+		}
+	}
+</script>
+		<tr>
+			<td align="left" colspan="1" class="bk-1" style="padding-left: 5px"><img src="<%=request.getContextPath()%>/mis/images/logo_01.png" width="198" height="50"/></td>
+
+          	<td width="540" class="bk-1" valign="middle"><table width="520" border="0" align="center">
+            	<tr align="left" valign="middle">
+              		<td height="20">目前管理語系 ：</td>
+          			<%if(ss_lang_value.length > 1) { %>
+          			<%--
+          			<form name="change_mislang" method="post" action="<%=request.getRequestURI() %>">
+          			// 更新遇到問題時請換成這行
+          			<form name="change_mislang" method="post" action="<%=../default.jsp %>">
+          			--%>
+          			<form name="change_mislang" method="post" action="<%=code %>.jsp">
+          				<td>
+          					<select name="mis_language" id="mis_language" onchange="change_mislang.submit();">
+                				<% 
+                				for(int i = 0; i < ss_lang_value.length; i++) { 
+                					String now_mislang=(String)session.getAttribute("language");
+                				%>
+								<option value="<%=ss_lang_value[i] %>" <%=now_mislang.equals(ss_lang_value[i])?"selected":""%> ><%=ss_lang_text[i] %></option>
+								<%} %>
+							</select>
+          				</td>
+          			</form>
+          			<%} else { %>
+          			<td>
+          				<B><%=(String)session.getAttribute("language_str")%></B>
+          			</td>
+          			<%} %>
+          			<td>系統將於 <input id="_outtime" style="color:red; text-align: center; text-shadow: orange;" type="text" value="<%=back_time %>" size="1" readonly> 分後自動登出</td>
+            	</tr>
+            	<tr align="left" valign="middle">
+              		<td height="20" width="150">登入者： <%=app_user.getString("au_name")%></td>
+              		<td>登入時間： <%=thislogin.getString("al_logdate")%></td>
+              		<td></td>              
+            	</tr>
+				<tr align="left" valign="middle">
+              		<td height="20">登入IP： <%=thislogin.getString("al_remoteip")%></td>
+              		<td>上次登入： <%=lastlogin.getString("al_logdate")%></td>
+              		<td>系統版本別：<B> <%=version_str %></B></td>
+            	</tr>
+          	</table></td>
+        </tr>
+        <tr align="left">
+			<td colspan="2" class="bk-2r"><table width="986" border="0" cellspacing="0" cellpadding="0">
+            	<tr>
+					<%
+   					for(int i = 0; i < app_tmfs.size(); i++) {
+       					TableRecord _mf = (TableRecord)app_tmfs.get(i);
+       					String _image = _mf.getString("mf_id").equals(ses_ctmf.getString("mf_id")) ? _mf.getString("mf_image1") : _mf.getString("mf_image2");
+					%>
+              		<td width="90"><a href="<%=request.getContextPath()%>/mis/default.jsp?mfid=<%=_mf.getString("mf_id")%>"><img src="<%=request.getContextPath()%>/mis/images/<%=_image%>" width="90" height="28" border="0"></a></td>
+					<%} %>
+              		<td width="90"><a href="<%=request.getContextPath()%>/mis/logout.jsp"><img src="<%=request.getContextPath()%>/mis/images/logout_button_1.gif" width="90" height="28" border="0"></a></td>
+					<%for(int i = app_tmfs.size(); i < 13; i++) { %>
+              		<td width="90" align="left"><img src="<%=request.getContextPath()%>/mis/images/blank.gif" width="90" height="28" border="0"></td>
+					<%} %>
+              		<td width="140" align="right"><%--<img src="<%=request.getContextPath()%>/mis/images/logo_s.gif" width="90" height="28">--%>&nbsp;</td>
+              		<td width="1">&nbsp;</td>
+            	</tr>
+            	<tr>
+              		<td colspan="15" background="<%=request.getContextPath()%>/mis/images/<%=ses_ctmf.getString("mf_topimage")%>"><img src="<%=request.getContextPath()%>/mis/images/<%=ses_ctmf.getString("mf_topimage")%>" width="10" height="13"></td>
+              	</tr>
+          	</table></td>
+		</tr>

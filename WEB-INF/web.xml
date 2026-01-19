@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:web="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd http://xmlns.jcp.org/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.4">
+  	<servlet>
+	    <servlet-name>ServletConfigurator</servlet-name>
+	    <servlet-class>org.logicalcobwebs.proxool.configuration.ServletConfigurator</servlet-class>
+	    <init-param>
+      		<param-name>propertyFile</param-name>
+      		<param-value>WEB-INF/classes/app/res/proxool.properties</param-value>
+    	</init-param>
+    	<load-on-startup>1</load-on-startup>
+  	</servlet>
+  	<session-config>
+	    <session-timeout>30</session-timeout>
+  	</session-config>
+  	<welcome-file-list>
+	    <welcome-file>
+            index.jsp
+        </welcome-file>
+  	</welcome-file-list>
+  	
+  	<!-- 去除空白用 -->
+  	<servlet>
+	    <servlet-name>jsp</servlet-name>
+	    <servlet-class>org.apache.jasper.servlet.JspServlet</servlet-class>
+	    <init-param>
+	      	<param-name>trimSpaces</param-name>
+      		<param-value>true</param-value>
+    	</init-param>
+    	<init-param>
+      		<param-name>fork</param-name>
+      		<param-value>false</param-value>
+    	</init-param>
+    	<init-param>
+      		<param-name>xpoweredBy</param-name>
+      		<param-value>false</param-value>
+    	</init-param>
+    	<load-on-startup>3</load-on-startup>
+  	</servlet>
+
+  	<!--
+ 	過濾器使用 Start
+	不使用時就不用打開，要使用時打開後，要註意是否有 redirect_record 的資料庫以及beans否則網站會直接500 
+
+    <filter>
+        <filter-name>performance</filter-name>
+        <filter-class>com.genesis.filter.urlFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>performance</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+	-->
+
+	  
+	<error-page>
+	    <error-code>500</error-code>
+	    <location>/404.jsp</location>
+	</error-page>
+	<error-page>
+	    <error-code>404</error-code>
+	    <location>/404.jsp</location>
+	</error-page>
+	
+</web-app>

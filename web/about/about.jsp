@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@include file="/WEB-INF/jspf/config.jspf"%>
+<%@include file="../include/words.jsp" %>
+<%
+	//參數設定
+	String page_code 	= "about", 				  			// 頁面識別碼
+		   banner_code	= "about",							// banner識別碼
+		   bannerImg 	= "../images/inBanner.jpg";  	    // 內頁banner預設圖
+	
+    // 資料列表(左側選單)
+	Vector<TableRecord> left_cps = app_sm.selectAll(tblcp, "cp_code=? and cp_lang=? "
+			, new Object[]{page_code, lang}, "cp_showseq ASC, cp_createdate DESC");
+
+	// 資料編號
+	String cp_id = StringTool.validString(request.getParameter("cp_id"));
+								   
+	// 資料內容
+	TableRecord cp = app_sm.select(tblcp , cp_id);
+						
+	// 預設資料
+	if(cp.getString("cp_id").equals("") && left_cps.size()>0){
+		cp = left_cps.get(0);
+		cp_id=cp.getString("cp_id");
+	}   
+
+    // 內頁banner
+	TableRecord inbanner_ap = app_sm.select(tblap,"ap_code=? and ap_lang=? and ap_category=?"
+			, new Object[]{"sub_banner", lang, banner_code});
+	if(!"".equals(inbanner_ap.getString("ap_image"))) {
+		bannerImg = app_fetchpath+"/sub_banner/"+lang+"/"+inbanner_ap.getString("ap_image");
+	}
+%>
+
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/in.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+    <title><%=app_webtitle %></title>
+	
+	<%-- SEO 讀取關鍵字設定值 --%>
+	<meta name="Robots" content="<%=cp.getString("cp_robots") %>" />
+	<meta name="revisit-after" content="<%=cp.getString("cp_revisit_after") %> days" />
+	<meta name="keywords" content="<%=cp.getString("cp_keywords") %>" />
+	<meta name="copyright" content="<%=cp.getString("cp_copyright") %>" />
+	<meta name="description" content="<%=cp.getString("cp_description") %>" />
+	<%-- 追蹤碼 --%><%=cp.getString("cp_seo_track") %>
+	
+	<%-- OG 設定 --%>
+	<%
+	// Server name.	
+	String servername = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort();
+	if(request.getServerPort() == 80 || request.getServerPort() == 443) {
+		servername = request.getScheme()+"://"+request.getServerName();
+	}
+	String localname = request.getScheme()+"://"+request.getLocalName()+":"+request.getLocalPort();
+	String url = servername + request.getContextPath();
+	%>
+	<meta property="og:url"           content="<%=request.getRequestURL()+(request.getQueryString()!=null&&!request.getQueryString().isEmpty()?"?"+request.getQueryString():"")%>" />
+	<meta property="og:type"          content="website" />
+	<meta property="og:title"         content="<%=app_webtitle %>" />
+	<meta property="og:description"   content="<%=cp.getString("cp_description")  %>" />
+	<meta property="og:image"         content="<%=url+"/web/images/icon.png" %>" />
+	
+	<%-- 共用設定 --%>
+	<%@include file="../include/head.jsp" %>
+</head>
+
+<body>
+    <%-- 版頭設定 --%>
+	<%@include file="../include/top_menu.jsp" %>
+    
+    <!--main-->
+    <div class="main">
+    	
+        <!--內頁banner-->
+        <div class="in_Banner">
+        	<img src="<%=bannerImg %>" width="1280" height="288" />
+        </div>
+        
+		<!-- InstanceBeginEditable name="main" -->
+        <div class="wrap">
+            
+            <!--左側-->     
+            <div class="left">
+                <!--左側標題-->
+                <div class="left_tit">
+                    <%=show_str.get("about."+lang) %>
+                </div>
+                <!--左側選單區塊-->
+                <div class="left_list_area">
+                <%for(TableRecord left_cp:left_cps){ %>
+                    <div class="left_list <%=left_cp.getString("cp_id").equals(cp_id)?"active":"" %>"><!--當前模式class加active-->
+                        <a href="../about/about.jsp?cp_id=<%=left_cp.getString("cp_id") %>">
+                            <%=left_cp.getString("cp_title") %>
+                        </a>	
+                    </div>
+                <%} %>
+                </div>
+            </div>
+            
+            
+            <!--右側-->
+            <div class="right">
+                <!--右側標題-->
+                <div class="right_tit">
+                    <%=cp.getString("cp_title") %>
+                </div>
+                
+                <!--網編區-->
+                <section class="text_area">
+                    <%=cp.getString("cp_content") %>
+                </section>
+            </div>
+            
+            
+        	<div class="clearfloat">
+            </div>
+        </div>
+        <!-- InstanceEndEditable -->  
+    </div>
+
+        
+    <%-- 版腳 --%>
+    <%@include file="../include/copyright.jsp" %>
+</body>
+<!-- InstanceEnd --></html>
+<%@include file="/WEB-INF/jspf/connclose.jspf"%>

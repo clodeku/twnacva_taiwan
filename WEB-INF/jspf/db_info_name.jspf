@@ -1,0 +1,22 @@
+<%@page pageEncoding="UTF-8"%>
+<%
+	// 主檔區										for nacva 防弊協會
+	String tblap = "ad_profile"; 				// 首頁輪播 廣告 相簿
+	String tblcp = "content_profile"; 			// 文案 檔案下載
+	String tbldm = "down_menu"; 				// 類別資料
+	String tblnp = "news_profile"; 				// 最新消息  
+	String tblmp = "member_profile"; 			// 會員資料
+	String tblai = "activity_information";		// 活動資料
+	String tblaa = "activity_apply";			// 活動報名資料
+	String tblrs = "receipt_sheet";				// 收據資料(僅做記錄用)
+
+	// 校園管理模組
+	String tblfd = "file_detail";				// 相關檔案/圖檔資訊
+
+	// 系統區
+	String tblal = "admin_log";					// 管理者登入記錄
+	String tblamf = "admin_map_function"; 		// 管理者權限
+	String tblau = "admin_user"; 				// 管理者帳號
+	String tblmf = "mis_function"; 				// 後台功能選單
+	String tblss = "site_setup"; 				// 全域通用設定
+%>

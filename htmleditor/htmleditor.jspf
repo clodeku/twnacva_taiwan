@@ -1,0 +1,232 @@
+<!-- TinyMCE -->
+<!-- 用專案的名稱配絕對路徑去抓取-->
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.genesis.util.*"%>
+<%
+// Set request character encoding.
+request.setCharacterEncoding("UTF-8");
+	//Language選項
+	//String lan = StringTool.validString((String)session.getAttribute("language"));
+	String lan = "tw";      // 強迫網編使用繁體中文訊息
+	
+	//決定mceEditor的語系 deFault 中文
+	if(lan.equals("tw")) {
+		lan = "zh_TW"; 
+		//lan = "tw";
+	} else if(lan.equals("my")) {
+		lan = "ms";
+	} else if(lan.equals("") || lan == null) {
+		lan="zh_TW";
+	}
+	
+	String contextPath = request.getContextPath();
+	// 依使用者帳號做為預設目錄 , 即在預設目錄 root 下再增加一層目錄
+	String _id = (String)session.getAttribute("path_id")!= null?(String)session.getAttribute("path_id"):"";
+	
+	
+%>
+<script type="text/javascript" src="<%=request.getContextPath()%>/htmleditor/tinymce/tinymce.js"></script>
+<script type="text/javascript">
+function convertWord(type, content) {
+	switch (type) {
+		// Gets executed before the built in logic performes it's cleanups
+		case "before":
+			//content = content.toLowerCase(); // Some dummy logic
+			break;
+
+		// Gets executed after the built in logic performes it's cleanups
+		case "after":
+			//content = content.toLowerCase(); // Some dummy logic
+			break;
+	}
+	return content;
+}
+
+	//標準文字編輯器的一些基本參數值
+	tinyMCE.init({
+		// lang
+		language: '<%=lan %>',
+		editor_selector : "mceEditor", 			// textarea class =  mceEditor										
+		// function 
+		plugins : "advlist autolink link lists charmap print preview textcolor colorpicker image code fullscreen"+ //imagetools  ←可以編輯圖片  20190610 miles 先拿掉 客戶疑問
+		" autoresize searchreplace table wordcount template media paste anchor hr emoticons",			
+
+		// button
+		
+		toolbar1: "undo redo | cut copy paste pastetext | removeformat | searchreplace | formatselect fontselect fontsizeselect |",
+		toolbar2: "bold italic underline strikethrough forecolor backcolor | alignleft  aligncenter  alignright alignjustify | outdent indent | blockquote numlist bullist | subscript superscript  hr charmap emoticons |",		
+		toolbar3: "newdocument template | link unlink anchor table | media image | preview print code  fullscreen |",
+			
+		//font
+		font_formats: "Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;AkrutiKndPadmini=Akpdmi-n;\u65b0\u7d30\u660e\u9ad4=\u65b0\u7d30\u660e\u9ad4;\u6a19\u6977\u9ad4=\u6a19\u6977\u9ad4;\u5fae\u8edf\u6b63\u9ed1\u9ad4=\u5fae\u8edf\u6b63\u9ed1\u9ad4",
+		theme : "modern",
+		resize: 'both',
+        automatic_uploads: true,
+        fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 64pt 72pt',
+		content_css : "css/content.css",
+		image_title: true, 
+	    // enable automatic uploads of images represented by blob or data URIs
+	    automatic_uploads: true,
+  		images_reuse_filename: true,
+	    file_picker_types: 'file image media',
+   	    
+   	    file_browser_callback :
+			function myFileBrowser (field_name, url, type, win) {
+			     tinyMCE.activeEditor.windowManager.open({
+			        file : "<%=request.getContextPath()%>/htmleditor/lister.jsp?type="+type+"&id=<%=_id%>", 
+			        title : 'My File Browser',
+			        width : '1024',  						// Your dimensions may differ - toy around with them!
+			        height : '540',
+			        resizable: 'yes',
+			        inline : "yes",  // This parameter only has an effect if you use the inlinepopups plugin!
+			        close_previous : "no"
+			    }, {
+				oninsert: function(url) {
+				    var fieldElm = win.document.getElementById(field_name);
+				    fieldElm.value = url; 
+				    if ("createEvent" in document) {
+				        var evt = document.createEvent("HTMLEvents");
+				        evt.initEvent("change", false, true);
+				        fieldElm.dispatchEvent(evt);
+				    } else {
+				        fieldElm.fireEvent("onchange");
+				    }
+				}
+
+			    });
+			    return false;
+			},
+			
+		templates: [
+		            <%
+		            // 範本--網編使用的內頁樣版內容
+		            Vector<TableRecord> tinymce_templates = app_sm.selectAll(tblcp,"cp_code=? and cp_lang=?",new Object[]{"templates",lang},"cp_showseq ASC , cp_createdate DESC");
+		            for(TableRecord template:tinymce_templates){
+		            %>
+		            {title: '<%=template.getString("cp_title")%>', description: '<%=template.getString("cp_desc").replaceAll("(\r\n|\n)","<br/>")%>', content: '<%=template.getString("cp_content").replaceAll("(\"|\')","\\\\'").replaceAll("(\r\n|\n)","")%>'},
+		            <% } %>
+		          ],
+		
+		relative_urls : false,
+		remove_script_host : false,				//上傳圖檔時,會自動加上http://XXXX
+		force_br_newlines : true, 				// 
+		force_p_newlines : false, 				//
+		convert_newlines_to_brs : true,
+		fullscreen_new_window : false, 			// fullscreen模式 開新視窗
+		mode : "specific_textareas", 
+		editor_deselector : "mceNoEditor",
+		dialog_type : "modal",
+		paste_auto_cleanup_on_paste : false,
+		paste_convert_middot_lists : true,
+		paste_unindented_list_class : "unindentedList",
+		paste_convert_headers_to_strong : true,
+		paste_insert_word_content_callback : "convertWord",
+        // 不允許粘貼圖像 , 因為網編會將圖像轉成 blob base64 code 存入 DB
+        paste_data_images: false,
+        // 預設為允許貼上文件中的格式
+        paste_as_text: false,
+        // 允許 Word , Execl 文件保留全部格式貼入 , 亦可自定義保留格式
+	    paste_retain_style_properties: "all",
+	    paste_word_valid_elements: '*[*]',        // word需要它
+	    paste_convert_word_fake_lists: false,     // 插入word文件時不做特殊字元做轉換
+	    //extended_valid_elements: "ul,li,ol",
+
+	    
+	    theme_advanced_path : false,
+		// Theme options
+		theme_advanced_toolbar_location : "top",
+		theme_advanced_toolbar_align : "left",
+		theme_advanced_statusbar_location : "top",
+		theme_advanced_resizing : true,
+		image_advtab: true,
+		branding: false,
+		
+	});
+	
+	//第二個文字編輯器的一些基本參數值
+	tinyMCE.init({
+		// lang
+		language: '<%=lan %>',
+		editor_selector : "ezEditor", 			// textarea class =  ezEditor										
+		// function 
+		plugins : "advlist autolink link lists charmap print preview textcolor colorpicker image code fullscreen"+ //imagetools  ←可以編輯圖片  20190610 miles 先拿掉 客戶疑問
+		" autoresize searchreplace table wordcount template media paste hr emoticons",			
+		// button 
+		toolbar1: "bold italic underline strikethrough forecolor backcolor | alignleft  aligncenter  alignright alignjustify | outdent indent | blockquote numlist bullist | hr charmap emoticons | link unlink |",		
+
+		//font
+		font_formats: 'Arial=arial,helvetica,sans-serif;Courier New=courier new,courier,monospace;AkrutiKndPadmini=Akpdmi-n;\u65b0\u7d30\u660e\u9ad4=\u65b0\u7d30\u660e\u9ad4;\u6a19\u6977\u9ad4=\u6a19\u6977\u9ad4;\u5fae\u8edf\u6b63\u9ed1\u9ad4=\u5fae\u8edf\u6b63\u9ed1\u9ad4',
+		theme : "modern",
+		resize: 'both',
+        automatic_uploads: true,
+        fontsize_formats: '8pt 10pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 64pt 72pt',
+		content_css : "css/content.css",
+		image_title: true, 
+	    // enable automatic uploads of images represented by blob or data URIs
+	    automatic_uploads: true,
+  		images_reuse_filename: true,
+	    file_picker_types: 'file image media',
+   	    
+   	    file_browser_callback :
+			function myFileBrowser (field_name, url, type, win) {
+			     tinyMCE.activeEditor.windowManager.open({
+			        file : "<%=request.getContextPath()%>/htmleditor/lister.jsp?type="+type+"&id=<%=_id%>", 
+			        title : 'My File Browser',
+			        width : '1024',  						// Your dimensions may differ - toy around with them!
+			        height : '540',
+			        resizable: 'yes',
+			        inline : "yes",  // This parameter only has an effect if you use the inlinepopups plugin!
+			        close_previous : "no"
+			    }, {
+				oninsert: function(url) {
+				    var fieldElm = win.document.getElementById(field_name);
+				    fieldElm.value = url; 
+				    if ("createEvent" in document) {
+				        var evt = document.createEvent("HTMLEvents");
+				        evt.initEvent("change", false, true);
+				        fieldElm.dispatchEvent(evt);
+				    } else {
+				        fieldElm.fireEvent("onchange");
+				    }
+				}
+
+			    });
+			    return false;
+			},
+			
+		relative_urls : false,
+		remove_script_host : false,				//上傳圖檔時,會自動加上http://XXXX
+		force_br_newlines : true, 				// 
+		force_p_newlines : false, 				//
+		convert_newlines_to_brs : true,
+		fullscreen_new_window : false, 			// fullscreen模式 開新視窗
+		mode : "specific_textareas", 
+		editor_deselector : "mceNoEditor",
+		dialog_type : "modal",
+		paste_auto_cleanup_on_paste : false,
+		paste_convert_middot_lists : true,
+		paste_unindented_list_class : "unindentedList",
+		paste_convert_headers_to_strong : true,
+		paste_insert_word_content_callback : "convertWord",
+        // 不允許粘貼圖像 , 因為網編會將圖像轉成 blob base64 code 存入 DB
+        paste_data_images: false,
+        // 預設為不允許文件中的格式貼上
+        paste_as_text: true,
+	    paste_word_valid_elements: '*[*]',        // word需要它
+	    paste_convert_word_fake_lists: false,     // 插入word文件時不做特殊字元做轉換
+	    //extended_valid_elements: "ul,li,ol",
+	    
+	    theme_advanced_path : false,
+		// Theme options
+		theme_advanced_toolbar_location : "top",
+		theme_advanced_toolbar_align : "left",
+		theme_advanced_statusbar_location : "top",
+		theme_advanced_resizing : true,
+		image_advtab: true,
+		branding: false,
+		menubar: false,
+	});
+	
+	
+</script>
+<!-- /TinyMCE -->
