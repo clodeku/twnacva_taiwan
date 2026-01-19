@@ -97,3 +97,51 @@ Key libraries in WEB-INF/lib:
 - `poi-4.1.2.jar` - Excel support
 - `AllPay.Payment.Integration.jar` - Payment gateway
 - `genemail_1.8.jar` - Email service
+
+## Authentication Systems
+
+**Member Login** (`/web/member/log_in.jsp`):
+- Session: `session.getAttribute("member")` returns TableRecord
+- Password: 8-30 chars, requires digit + uppercase + lowercase
+
+**Admin Login** (`/mis/login.jsp`):
+- CAPTCHA required: `session.getAttribute("rand")`
+- Session variables: `app_user`, `top_function`, `left_function`, `lastlogin`
+- Audit logging to `admin_log` table
+
+## File Upload Paths
+
+Uploads stored in `/uploads/{page_code}/{language}/`:
+- Members: `/uploads/member/tw/`, `/uploads/member/en/`
+- Activities: `/uploads/activity/tw/`
+- News: `/uploads/news/tw/`
+- Banners: `/uploads/banner/tw/`
+
+## Email Templates
+
+Located in `/web/mail/`:
+- `add_member.jsp` - Registration confirmation
+- `forget_password.jsp` - Password reset
+- `activity_apply.jsp` - Activity registration
+- `course_apply.jsp` - Course registration
+- `tacva.jsp`, `nacva.jsp` - Membership notifications
+
+## Key Form Processing
+
+| Form | Submit To | Purpose |
+|------|-----------|---------|
+| Member registration | `/web/member/member_update.jsp` | Insert to member_profile |
+| Activity registration | `/web/activity/activity_apply_update.jsp` | Insert to activity_apply |
+| Course registration | `/web/course/course_apply_update.jsp` | Insert to activity_apply |
+| Admin content CRUD | `/mis/basic/*_update.jsp` | Various tables |
+
+## Session Variables
+
+| Variable | Scope | Purpose |
+|----------|-------|---------|
+| `member` | Web | Logged-in member TableRecord |
+| `web_language` | Web | Language preference (tw/en) |
+| `app_user` | Admin | Admin user TableRecord |
+| `rand` | Both | CAPTCHA verification string |
+| `top_function` | Admin | Permitted top menu items |
+| `left_function` | Admin | Permitted submenu items |
